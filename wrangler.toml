@@ -1,0 +1,54 @@
+# =============================================================================
+# wrangler.toml — mazze-lab Cloudflare Pages configuration
+# Deploy target: lab.mazzeleczzare.com
+# =============================================================================
+# Setup steps:
+#   1. `npm install -g wrangler` (one-time)
+#   2. `wrangler login`
+#   3. `wrangler pages project create mazze-lab` (one-time)
+#   4. Deploy: `wrangler pages deploy src --project-name mazze-lab`
+#
+# Custom domain (after first deploy):
+#   Cloudflare dashboard → Pages → mazze-lab → Custom domains
+#   → Add: lab.mazzeleczzare.com
+# =============================================================================
+
+name = "mazze-lab"
+
+# Pages config — no build step needed for static HTML artifacts
+pages_build_output_dir = "src"
+
+# If you add a Vite build step later for React artifacts, change to:
+# pages_build_output_dir = "dist"
+# and add [build] section below
+
+# [build]
+# command = "npm run build"
+# cwd = "."
+
+[[redirects]]
+  # Redirect bare root to gallery
+  from   = "/"
+  to     = "/index.html"
+  status = 200
+
+[[headers]]
+  # Security headers for all routes
+  for = "/*"
+  [headers.values]
+    X-Frame-Options            = "DENY"
+    X-Content-Type-Options     = "nosniff"
+    Referrer-Policy            = "strict-origin-when-cross-origin"
+    Permissions-Policy         = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+    Content-Security-Policy    = "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"
+
+[[headers]]
+  # Long cache for static assets (fonts, images)
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

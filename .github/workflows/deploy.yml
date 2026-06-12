@@ -1,0 +1,86 @@
+# =============================================================================
+# deploy.yml — mazze-lab Cloudflare Pages deployment
+# =============================================================================
+# Triggers on every push to `main`. Deploys src/ to Cloudflare Pages.
+# Preview deployments are created automatically for pull requests.
+#
+# Required secrets (set in GitHub → Settings → Secrets → Actions):
+#   CLOUDFLARE_API_TOKEN   — scoped to Cloudflare Pages (see setup docs)
+#   CLOUDFLARE_ACCOUNT_ID  — found in CF dashboard → right sidebar
+# =============================================================================
+
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+  # Allow manual trigger from GitHub Actions UI
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write   # required for CF Pages deployment status
+      pull-requests: write # required to post preview URL comment on PRs
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify src/ directory exists
+        # Fast fail with a clear message if the build output is missing.
+        # This catches accidental empty commits or misconfigured paths.
+        run: |
+          if [[ ! -d "src" ]]; then
+            echo "::error::src/ directory not found. Nothing to deploy."
+            exit 1
+          fi
+          echo "src/ verified. Files to deploy:"
+          find src -type f | sort
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy src --project-name=mazze-lab --commit-dirty=true
+          # commit-dirty=true allows deploy even if git working tree has changes
+          # (safe here because we're deploying the checked-out ref, not local state)
+
+      - name: Post preview URL on pull request
+        # Only runs on PRs — posts the Cloudflare preview URL as a comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const marker = '<!-- mazze-lab-preview -->';
+            const existing = comments.find(c => c.body.includes(marker));
+            const body = `${marker}\n🔬 **mazze-lab preview deployed** — Cloudflare Pages will post the URL in the deployment status above.`;
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }

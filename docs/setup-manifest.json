@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mazze-lab-setup-manifest",
+  "meta": {
+    "project": "mazze-lab",
+    "version": "1.0.0",
+    "description": "Setup manifest for mazze-lab GitHub Actions → Cloudflare Pages deployment pipeline",
+    "last_updated": "2026-04-02",
+    "deploy_target": "lab.mazzeleczzare.com"
+  },
+  "prerequisites": [
+    {
+      "id": "github_account",
+      "label": "GitHub account",
+      "check": "git remote -v | grep github.com",
+      "required": true
+    },
+    {
+      "id": "cloudflare_account",
+      "label": "Cloudflare account with Pages enabled",
+      "check": "wrangler whoami",
+      "required": true
+    },
+    {
+      "id": "wrangler_cli",
+      "label": "Wrangler CLI ≥ 3.0",
+      "install": "npm install -g wrangler",
+      "check": "wrangler --version",
+      "required": true
+    },
+    {
+      "id": "domain_dns",
+      "label": "mazzeleczzare.com DNS managed by Cloudflare",
+      "note": "Domain must be in a Cloudflare zone for custom domain to work",
+      "required": true
+    }
+  ],
+  "steps": [
+    {
+      "id": "step_1",
+      "phase": "cloudflare",
+      "title": "Create Cloudflare Pages project",
+      "once": true,
+      "commands": [
+        "wrangler login",
+        "wrangler pages project create mazze-lab"
+      ],
+      "expected_output": "Successfully created the 'mazze-lab' project",
+      "notes": "Run once. If project already exists, skip to step 2."
+    },
+    {
+      "id": "step_2",
+      "phase": "cloudflare",
+      "title": "Get Cloudflare Account ID",
+      "once": true,
+      "method": "dashboard",
+      "url": "https://dash.cloudflare.com",
+      "location": "Right sidebar on any zone page, or Workers & Pages overview",
+      "value_format": "32-character hex string",
+      "store_as": "CLOUDFLARE_ACCOUNT_ID"
+    },
+    {
+      "id": "step_3",
+      "phase": "cloudflare",
+      "title": "Create scoped Cloudflare API token",
+      "once": true,
+      "method": "dashboard",
+      "url": "https://dash.cloudflare.com/profile/api-tokens",
+      "instructions": [
+        "Click 'Create Token'",
+        "Use template: 'Edit Cloudflare Workers' OR build custom",
+        "If custom: set Permission = 'Cloudflare Pages — Edit'",
+        "Set Zone Resources = 'All zones' OR specific zone for mazzeleczzare.com",
+        "Set Account Resources = 'Your account'",
+        "Click Continue to summary → Create Token",
+        "Copy the token immediately — it is shown only once"
+      ],
+      "store_as": "CLOUDFLARE_API_TOKEN",
+      "security_note": "Token is scoped to Pages only. Do not use Global API Key."
+    },
+    {
+      "id": "step_4",
+      "phase": "github",
+      "title": "Add secrets to GitHub repository",
+      "once": true,
+      "method": "dashboard",
+      "url": "https://github.com/{owner}/{repo}/settings/secrets/actions",
+      "secrets": [
+        {
+          "name": "CLOUDFLARE_API_TOKEN",
+          "description": "Scoped CF API token from step 3",
+          "sensitive": true
+        },
+        {
+          "name": "CLOUDFLARE_ACCOUNT_ID",
+          "description": "CF Account ID from step 2",
+          "sensitive": false
+        }
+      ]
+    },
+    {
+      "id": "step_5",
+      "phase": "github",
+      "title": "Push repository to GitHub",
+      "commands": [
+        "git init",
+        "git add .",
+        "git commit -m 'feat: initial mazze-lab scaffold'",
+        "git branch -M main",
+        "git remote add origin https://github.com/{owner}/mazze-lab.git",
+        "git push -u origin main"
+      ],
+      "notes": "Replace {owner} with your GitHub username. Create the repo on GitHub first (no README, no .gitignore)."
+    },
+    {
+      "id": "step_6",
+      "phase": "cloudflare",
+      "title": "Add custom domain",
+      "once": true,
+      "method": "dashboard",
+      "url": "https://dash.cloudflare.com → Workers & Pages → mazze-lab → Custom domains",
+      "instructions": [
+        "Click 'Set up a custom domain'",
+        "Enter: lab.mazzeleczzare.com",
+        "Click Continue → Activate domain",
+        "DNS CNAME record is added automatically (mazzeleczzare.com must be in CF)"
+      ],
+      "propagation_time": "Usually instant for CF-managed domains; up to 24h for external DNS"
+    },
+    {
+      "id": "step_7",
+      "phase": "verify",
+      "title": "Verify deployment",
+      "checks": [
+        {
+          "label": "GitHub Action ran successfully",
+          "url": "https://github.com/{owner}/mazze-lab/actions"
+        },
+        {
+          "label": "Cloudflare Pages deployment visible",
+          "url": "https://dash.cloudflare.com → Workers & Pages → mazze-lab → Deployments"
+        },
+        {
+          "label": "Gallery loads at lab.mazzeleczzare.com",
+          "url": "https://lab.mazzeleczzare.com"
+        }
+      ]
+    }
+  ],
+  "workflow_behavior": {
+    "on_push_to_main": "Production deployment to lab.mazzeleczzare.com",
+    "on_pull_request": "Preview deployment to *.mazze-lab.pages.dev",
+    "on_workflow_dispatch": "Manual production deployment from Actions UI",
+    "preview_url_pattern": "https://{branch-slug}.mazze-lab.pages.dev"
+  },
+  "troubleshooting": [
+    {
+      "id": "err_auth",
+      "symptom": "Error: Authentication error [code: 10000]",
+      "cause": "CLOUDFLARE_API_TOKEN secret is missing, expired, or has wrong permissions",
+      "fix": [
+        "Confirm secret is set: GitHub → Settings → Secrets → Actions",
+        "Confirm token has 'Cloudflare Pages — Edit' permission",
+        "Regenerate token at dash.cloudflare.com/profile/api-tokens if needed"
+      ]
+    },
+    {
+      "id": "err_account",
+      "symptom": "Error: A request to the Cloudflare API failed — account not found",
+      "cause": "CLOUDFLARE_ACCOUNT_ID is wrong or missing",
+      "fix": [
+        "Re-check Account ID in CF dashboard right sidebar",
+        "Confirm it is a 32-character hex string with no spaces"
+      ]
+    },
+    {
+      "id": "err_project",
+      "symptom": "Error: Project not found",
+      "cause": "wrangler pages project create mazze-lab was not run, or project name mismatch",
+      "fix": [
+        "Run: wrangler pages project create mazze-lab",
+        "Confirm project-name in deploy.yml matches exactly: mazze-lab"
+      ]
+    },
+    {
+      "id": "err_domain",
+      "symptom": "lab.mazzeleczzare.com returns DNS_PROBE_FINISHED_NXDOMAIN",
+      "cause": "Custom domain not added in CF Pages, or DNS not propagated",
+      "fix": [
+        "Check CF dashboard → Workers & Pages → mazze-lab → Custom domains",
+        "If domain shows 'Pending', wait up to 24h",
+        "If domain not listed, follow step 6 above"
+      ]
+    },
+    {
+      "id": "err_csp",
+      "symptom": "Fonts or external scripts blocked in browser console",
+      "cause": "Content-Security-Policy in wrangler.toml does not allow the origin",
+      "fix": [
+        "Edit wrangler.toml [[headers]] CSP to add the required origin",
+        "Example: add https://cdnjs.cloudflare.com to script-src if using CDN scripts"
+      ]
+    },
+    {
+      "id": "err_src_missing",
+      "symptom": "Action fails: src/ directory not found",
+      "cause": "Committed without the src/ directory, or wrong branch",
+      "fix": [
+        "Confirm src/index.html exists in your repo",
+        "Run: git status — ensure src/ is tracked and committed",
+        "Run: git push origin main"
+      ]
+    }
+  ]
+}

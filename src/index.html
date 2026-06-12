@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="mazze lab — a cabinet of interactive artifacts, demos, and lore objects" />
+  <title>mazze lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Martian+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Design tokens ─────────────────────────────────────────────────────── */
+    :root {
+      --ink:        #0e0d0b;
+      --vellum:     #f4f0e8;
+      --cipher:     #1a1714;
+      --teal:       #2d7a6e;
+      --teal-dim:   #1f5549;
+      --coral:      #c4503a;
+      --gold:       #a8862a;
+      --slate:      #4a4640;
+      --mist:       #c8c2b8;
+      --fog:        #e8e2d8;
+
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-mono:    'Martian Mono', 'Courier New', monospace;
+
+      --gap:    clamp(1rem, 3vw, 2rem);
+      --radius: 2px;
+    }
+
+    /* ── Reset ─────────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--cipher);
+      color: var(--vellum);
+      font-family: var(--font-display);
+      font-size: clamp(1rem, 1.5vw, 1.125rem);
+      font-weight: 300;
+      line-height: 1.6;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* ── Grain overlay ─────────────────────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+    }
+
+    /* ── Layout ────────────────────────────────────────────────────────────── */
+    .site-wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: clamp(2rem, 6vw, 5rem) var(--gap);
+    }
+
+    /* ── Header ────────────────────────────────────────────────────────────── */
+    .site-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 1rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid rgba(200, 194, 184, 0.15);
+      margin-bottom: 3rem;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .site-title {
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      line-height: 0.9;
+      color: var(--vellum);
+    }
+
+    .site-title em {
+      font-style: italic;
+      color: var(--teal);
+    }
+
+    .site-byline {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 300;
+      color: var(--mist);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-align: right;
+      line-height: 1.8;
+    }
+
+    /* ── Namespace sections ─────────────────────────────────────────────────── */
+    .namespace {
+      margin-bottom: 3.5rem;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .namespace:nth-child(2) { animation-delay: 0.1s; }
+    .namespace:nth-child(3) { animation-delay: 0.2s; }
+    .namespace:nth-child(4) { animation-delay: 0.3s; }
+    .namespace:nth-child(5) { animation-delay: 0.4s; }
+
+    .namespace-header {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(200, 194, 184, 0.1);
+    }
+
+    .namespace-slug {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 400;
+      color: var(--teal);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      background: rgba(45, 122, 110, 0.12);
+      border: 1px solid rgba(45, 122, 110, 0.3);
+      padding: 0.2em 0.6em;
+      border-radius: var(--radius);
+    }
+
+    .namespace-title {
+      font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      color: var(--vellum);
+    }
+
+    .namespace-desc {
+      font-size: 0.82rem;
+      color: var(--mist);
+      margin-left: auto;
+      font-style: italic;
+    }
+
+    /* ── Artifact grid ──────────────────────────────────────────────────────── */
+    .artifact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      background: rgba(200, 194, 184, 0.08);
+      border: 1px solid rgba(200, 194, 184, 0.08);
+    }
+
+    /* ── Artifact card ──────────────────────────────────────────────────────── */
+    .artifact-card {
+      display: block;
+      background: var(--cipher);
+      padding: 1.25rem 1.4rem;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      transition: background 0.2s ease;
+      overflow: hidden;
+    }
+
+    .artifact-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--teal);
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: transform 0.25s ease;
+    }
+
+    .artifact-card:hover,
+    .artifact-card:focus-visible {
+      background: rgba(45, 122, 110, 0.06);
+      outline: none;
+    }
+
+    .artifact-card:hover::before,
+    .artifact-card:focus-visible::before {
+      transform: scaleY(1);
+    }
+
+    /* Focus ring for keyboard nav */
+    .artifact-card:focus-visible {
+      box-shadow: inset 0 0 0 2px var(--teal);
+    }
+
+    .artifact-card-placeholder {
+      background: rgba(26, 23, 20, 0.4);
+      cursor: default;
+      border: 1px dashed rgba(200, 194, 184, 0.1);
+    }
+
+    .artifact-card-placeholder:hover,
+    .artifact-card-placeholder:focus-visible {
+      background: rgba(26, 23, 20, 0.4);
+    }
+
+    .artifact-card-placeholder::before { display: none; }
+
+    .artifact-name {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--vellum);
+      margin-bottom: 0.35rem;
+      line-height: 1.3;
+    }
+
+    .artifact-type {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.6rem;
+    }
+
+    .artifact-desc {
+      font-size: 0.82rem;
+      color: var(--mist);
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    /* Status badge */
+    .artifact-status {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.52rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.2em 0.5em;
+      border-radius: var(--radius);
+    }
+
+    .status-live   { background: rgba(45, 122, 110, 0.2); color: var(--teal);  border: 1px solid rgba(45, 122, 110, 0.4); }
+    .status-wip    { background: rgba(168, 134, 42, 0.15); color: var(--gold);  border: 1px solid rgba(168, 134, 42, 0.3); }
+    .status-soon   { background: rgba(74, 70, 64, 0.3);    color: var(--mist);  border: 1px solid rgba(74, 70, 64, 0.5); }
+
+    /* Empty slot */
+    .artifact-empty {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--slate);
+      letter-spacing: 0.08em;
+      padding: 1.25rem 1.4rem;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────────────────────── */
+    .site-footer {
+      margin-top: 4rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(200, 194, 184, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      animation: fadeUp 0.8s ease 0.5s both;
+    }
+
+    .site-footer p {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 300;
+      color: var(--slate);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .site-footer a {
+      color: var(--teal);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .site-footer a:hover,
+    .site-footer a:focus-visible {
+      color: var(--vellum);
+      outline: 2px solid var(--teal);
+      outline-offset: 2px;
+      border-radius: 1px;
+    }
+
+    /* ── Animations ─────────────────────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Reduced motion ─────────────────────────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+
+    /* ── Mobile ─────────────────────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .site-header { grid-template-columns: 1fr; }
+      .site-byline { text-align: left; }
+      .namespace-desc { display: none; }
+      .artifact-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-wrapper">
+
+    <header class="site-header">
+      <h1 class="site-title"><em>mazze</em> lab</h1>
+      <p class="site-byline" aria-label="Site description">
+        artifacts &amp; interactive objects<br />
+        mazzeleczzare.com · lab subdomain
+      </p>
+    </header>
+
+    <main id="main-content">
+
+      <!-- ── /mz — Blog ───────────────────────────────────────────────────── -->
+      <section class="namespace" aria-labelledby="ns-mz">
+        <div class="namespace-header">
+          <span class="namespace-slug" aria-hidden="true">/mz</span>
+          <h2 class="namespace-title" id="ns-mz">mazzeleczzare.com</h2>
+          <span class="namespace-desc">blog companions &amp; tools</span>
+        </div>
+        <div class="artifact-grid" role="list">
+          <!-- Add artifact cards here as you build them -->
+          <div class="artifact-empty" role="listitem" aria-label="Empty slot">· · · awaiting artifacts</div>
+        </div>
+      </section>
+
+      <!-- ── /mow — Merchants of War ──────────────────────────────────────── -->
+      <section class="namespace" aria-labelledby="ns-mow">
+        <div class="namespace-header">
+          <span class="namespace-slug" aria-hidden="true">/mow</span>
+          <h2 class="namespace-title" id="ns-mow">Merchants of War</h2>
+          <span class="namespace-desc">speculative fiction · surrealist sci-fi</span>
+        </div>
+        <div class="artifact-grid" role="list">
+          <div class="artifact-empty" role="listitem" aria-label="Empty slot">· · · awaiting artifacts</div>
+        </div>
+      </section>
+
+      <!-- ── /gsfc — Go South for Cunning ─────────────────────────────────── -->
+      <section class="namespace" aria-labelledby="ns-gsfc">
+        <div class="namespace-header">
+          <span class="namespace-slug" aria-hidden="true">/gsfc</span>
+          <h2 class="namespace-title" id="ns-gsfc">Go South for Cunning</h2>
+          <span class="namespace-desc"></span>
+        </div>
+        <div class="artifact-grid" role="list">
+          <div class="artifact-empty" role="listitem" aria-label="Empty slot">· · · awaiting artifacts</div>
+        </div>
+      </section>
+
+      <!-- ── /tdhaw — The Devil Had a Wife ────────────────────────────────── -->
+      <section class="namespace" aria-labelledby="ns-tdhaw">
+        <div class="namespace-header">
+          <span class="namespace-slug" aria-hidden="true">/tdhaw</span>
+          <h2 class="namespace-title" id="ns-tdhaw">The Devil Had a Wife</h2>
+          <span class="namespace-desc">game</span>
+        </div>
+        <div class="artifact-grid" role="list">
+          <div class="artifact-empty" role="listitem" aria-label="Empty slot">· · · awaiting artifacts</div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="site-footer">
+      <p>lab.mazzeleczzare.com</p>
+      <p><a href="https://mazzeleczzare.com" aria-label="Back to main site">mazzeleczzare.com ↗</a></p>
+    </footer>
+
+  </div>
+
+  <script>
+    /**
+     * artifact-registry.js (inline)
+     * Edit ARTIFACTS to add new entries — no other file needs touching.
+     * Each entry maps directly to a namespace card in the gallery.
+     */
+    const ARTIFACTS = [
+      // Example entry — uncomment and edit when you have real artifacts:
+      // {
+      //   namespace: 'mz',
+      //   name: 'Cipher Palette',
+      //   type: 'interactive · tool',
+      //   desc: 'Explore the Cipher Gothic color system with contrast ratios.',
+      //   href: '/mz/cipher-palette/',
+      //   status: 'live',  // 'live' | 'wip' | 'soon'
+      // },
+    ];
+
+    const STATUS_LABEL = { live: 'live', wip: 'wip', soon: 'soon' };
+
+    /** Renders artifact cards into the correct namespace grid */
+    function renderArtifacts() {
+      const grids = {
+        mz:    document.querySelector('[aria-labelledby="ns-mz"] .artifact-grid'),
+        mow:   document.querySelector('[aria-labelledby="ns-mow"] .artifact-grid'),
+        gsfc:  document.querySelector('[aria-labelledby="ns-gsfc"] .artifact-grid'),
+        tdhaw: document.querySelector('[aria-labelledby="ns-tdhaw"] .artifact-grid'),
+      };
+
+      const populated = new Set();
+
+      ARTIFACTS.forEach(artifact => {
+        const grid = grids[artifact.namespace];
+        if (!grid) return;
+
+        const isPlaceholder = artifact.status === 'soon';
+        const tag = isPlaceholder ? 'div' : 'a';
+        const card = document.createElement(tag);
+
+        card.setAttribute('role', 'listitem');
+        card.className = 'artifact-card' + (isPlaceholder ? ' artifact-card-placeholder' : '');
+
+        if (tag === 'a') {
+          card.href = artifact.href;
+          card.setAttribute('aria-label', `${artifact.name} — ${artifact.desc}`);
+        } else {
+          card.setAttribute('aria-label', `${artifact.name} — coming soon`);
+        }
+
+        card.innerHTML = `
+          <span class="artifact-status status-${artifact.status}" aria-label="Status: ${STATUS_LABEL[artifact.status]}">
+            ${STATUS_LABEL[artifact.status]}
+          </span>
+          <p class="artifact-type">${escapeHtml(artifact.type)}</p>
+          <p class="artifact-name">${escapeHtml(artifact.name)}</p>
+          <p class="artifact-desc">${escapeHtml(artifact.desc)}</p>
+        `;
+
+        // Remove the empty slot placeholder if present
+        if (!populated.has(artifact.namespace)) {
+          const empty = grid.querySelector('.artifact-empty');
+          if (empty) empty.remove();
+          populated.add(artifact.namespace);
+        }
+
+        grid.appendChild(card);
+      });
+    }
+
+    /** Minimal XSS guard for dynamic card content */
+    function escapeHtml(str) {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return String(str).replace(/[&<>"']/g, c => map[c]);
+    }
+
+    renderArtifacts();
+  </script>
+</body>
+</html>
