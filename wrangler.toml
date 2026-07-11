@@ -1,6 +1,9 @@
 # =============================================================================
-# wrangler.toml — mazze-lab Cloudflare Pages configuration
-# Deploy target: lab.mazzeleczzare.com
+# wrangler.toml — Field Notes (mazze-lab) Cloudflare Pages configuration
+# Deploy target: fieldnotes.mazzeleczzare.com
+# -----------------------------------------------------------------------------
+# "Field Notes" is the public surface name; "mazze-lab" stays the internal Pages
+# project id (renaming a Pages project is disruptive — the name is not visible).
 # =============================================================================
 # Setup steps:
 #   1. `npm install -g wrangler` (one-time)
@@ -10,7 +13,8 @@
 #
 # Custom domain (after first deploy):
 #   Cloudflare dashboard → Pages → mazze-lab → Custom domains
-#   → Add: lab.mazzeleczzare.com
+#   → Add: fieldnotes.mazzeleczzare.com
+#   (studio.mazzeleczzare.com is a separate, live music Worker — leave it.)
 # =============================================================================
 
 name = "mazze-lab"
