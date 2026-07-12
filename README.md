@@ -1,7 +1,7 @@
-# mazze-lab
+# field-notes
 
 Interactive artifact gallery for [mazzeleczzare.com](https://mazzeleczzare.com).
-Deployed to `lab.mazzeleczzare.com` via Cloudflare Pages.
+Deployed to `fieldnotes.mazzeleczzare.com` via Cloudflare Pages. (Repo renamed from mazze-lab, 2026-07-11.)
 
 ## Namespaces
 
@@ -15,7 +15,7 @@ Deployed to `lab.mazzeleczzare.com` via Cloudflare Pages.
 ## Structure
 
 ```
-mazze-lab/
+field-notes/
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml          ← GitHub Actions pipeline
