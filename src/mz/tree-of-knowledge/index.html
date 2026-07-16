@@ -68,7 +68,7 @@ body.descended #descend:hover { background: var(--co-a); }
 #mn { flex: 1; display: flex; overflow: hidden; }
 
 #lp { width: 52%; border-right: 1px solid var(--bd); display: flex; flex-direction: column; overflow: hidden; transition: border-color .9s; }
-#legend { padding: 7px 12px; border-bottom: 1px solid var(--bd); display: flex; gap: 14px; flex-wrap: wrap; flex-shrink: 0; font-size: 7px; letter-spacing: .08em; color: var(--tx-d); transition: border-color .9s; }
+#legend { padding: 7px 12px; border-bottom: 1px solid var(--bd); display: flex; gap: 14px; flex-wrap: wrap; flex-shrink: 0; font-size: 9.5px; letter-spacing: .08em; color: var(--tx-d); transition: border-color .9s; }
 .lg { display: flex; align-items: center; gap: 5px; }
 .lg-dot { width: 7px; height: 7px; border-radius: 50%; border: 1px solid currentColor; }
 .lg.t { color: var(--acc); }
@@ -171,8 +171,20 @@ body.descended .face-body em { color: var(--co); }
 .intro strong { color: var(--acc); font-weight: 600; transition: color .9s; }
 body.descended .intro strong { color: var(--co); }
 
-#fn { border-top: 1px solid var(--bd); padding: 9px 15px; flex-shrink: 0; background: var(--bg-p); font-size: 7.5px; line-height: 1.6; color: var(--tx-d); letter-spacing: .04em; transition: border-color .9s, background .9s; }
+#fn { border-top: 1px solid var(--bd); padding: 9px 15px; flex-shrink: 0; background: var(--bg-p); font-size: 9.5px; line-height: 1.6; color: var(--tx-d); letter-spacing: .04em; transition: border-color .9s, background .9s; }
 #fn b { color: var(--gd); font-weight: 500; }
+
+/* ── narrow screens: stack the split, give the tree real height ── */
+@media (max-width: 760px) {
+  #app { height: auto; min-height: 100vh; }
+  #mn { flex-direction: column; overflow: visible; }
+  #lp, #rp { width: 100%; }
+  #lp { border-right: none; border-bottom: 1px solid var(--bd); }
+  #sw { height: min(120vw, 560px); padding: 10px 4px; }
+  #rs { overflow-y: visible; }
+  #hd { height: auto; min-height: 46px; flex-wrap: wrap; padding: 8px 12px; }
+  #mode { margin-left: 0; width: 100%; }
+}
 </style>
 </head>
 <body>
