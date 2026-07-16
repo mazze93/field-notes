@@ -130,9 +130,12 @@ create_artifact() {
       --ink:    #0e0d0b;
       --vellum: #f4f0e8;
       --cipher: #1a1714;
-      --teal:   #2d7a6e;
-      --coral:  #c4503a;
-      --gold:   #a8862a;
+      --teal:   #4fb3a3;
+      --teal-deep: #2d7a6e;
+      --coral:  #e0705a;
+      --coral-deep: #c4503a;
+      --gold:   #c9a441;
+      --gold-deep: #a8862a;
       --mist:   #c8c2b8;
 
       --font-display: 'Cormorant Garamond', Georgia, serif;
